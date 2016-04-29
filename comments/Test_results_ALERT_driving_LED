@@ -1,0 +1,40 @@
+
+setup:
+--------
+VDD = 4.5 v   ----- + LED - ---------------Rpull-up ------------ALERTpin
+
+
+
+LED forward Voltage = 2.6 volts
+
+VDD =  V(led) +  ( I(ds) * Rpull-up )
+
+
+choosing I(ds) = 1mA  ==> Rpull-up =  2Kohms.
+
+Results :
+when set  T(hys)=12  T(set) =20 ==>  Ids= 0.9mA  Valert=0.01
+when set  T(hys)=75  T(set) =80 ==>  Ids= 0 mA   Valert= 2.49
+
+
+choosing  I(ds) =2.75 mA  ==>  Rpull-up =700 ohms
+Results :
+when set  T(hys)=12  T(set) =20 ==>  Ids=2.75 mA  Valert=0.05
+when set  T(hys)=75  T(set) =80 ==>  Ids=0 mA     Valert= 2.48
+
+
+choosing  I(ds) =3 mA  ==>  Rpull-up =600 ohms
+Results :
+when set  T(hys)=12  T(set)=20 ==>  Ids=3.13 mA  Valert=0.38
+when set  T(hys)=75  T(set)=80 ==>  Ids=0 mA     Valert= 2.43
+
+
+Conclusion:
+choosing Ids = 1mA would be fine for driving GPIO-bbb, as we don't need high Ids while driving gpio-bbb.
+
+
+
+
+
+
+

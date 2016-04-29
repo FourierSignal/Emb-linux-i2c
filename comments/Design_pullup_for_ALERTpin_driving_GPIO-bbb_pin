@@ -1,0 +1,75 @@
+
+Test 3:  measure Vds(Valert) and Ids(~Ipull-up) when  ALERT o/p of Temp-sensor  driving the GPIO pin of BBB (configured as Reciever enabled => Bidirectional )
+
+Design of R(pull-up):
+---------------------
+Designing R(pull-up) pulling ALERT pin(which is also connected to GPIO-pin of BBB) to HIGH-vg level.
+ 
+ALERT pin specifications
+Logic 1 => I(OH)= 1uA (test condition V(OH)=5V )
+Logic 0 => V(OL)= 0.4v (test condition I(OL)=3mA )
+
+
+bbb-GPIO-specifications: Dc characterestics for LVCMOS pins (VDDSHVx = 3.3 V; x=1-6)
+
+                                             min      typ    max
+                                             --------------------
+High-level input voltage  V(IH)               2       ---     ---
+LOW-level input voltage V(IL)                ---      ---     0.8
+Hysteresis voltage at an input (VHYS)        0.265    ---     0.4
+
+Total leakage current    I(OZ)                ---     ---     18mA
+
+
+
+when V(alert) is in LOW state:
+-------------------------------
+Requirement : 
+
+bbb-gpio's V(IL) = 0.8 but V(HYS)min = 0.265  => 
+while input value changing from Logic level HIGH to LOW ,It is considered as LOW by gpio-bbb only when i/p Voltage level falls below 0.265 .
+so V(alert) should be < 0.265  in LOW state.
+
+Let us choose V(alert) = 0.1 volt.
+Also choosing  I(pull-up) = 0.7 mA   far below than I(OL)=3mA of ALERT pin.
+
+calculating R(pull-up):
+------------------------
+VDD = I(pull-up) * R(pull-up) + V(alert)
+3.3 = 0.7mA  *  R(pull-up)  + 0.1
+
+=>  R(pull-up) = 4.57Kohms   
+
+from the above equation choosing 4.7 Kohm  ==> V(alert) = 0.01 volts
+
+Also (I(OZ)max=18mA) bbb-gpio leakage current is very less compared to 0.7 mA , we need not to account it, while calculating R(pull-up).
+
+
+when V(alert) is in HIGH state: 
+----------------------------------
+I(OH) = 1uA  and V(OH)=3.3v for temp-sensor
+I(OZ)max = 18uA and V(IH)=2volts for GPIO-BBB.
+
+I(OZ) is the max leakage current into gpio, not the current requirement , we can neglect this.
+current into gpio - depends on Valert and internal structure of gpio. 
+If we want to minimise leakage current into gpio, we can choose  3.3v< V(alert)High <2
+
+since I(OH) of ALERT + I(OZ) of gpio-bbb is very small , we can neglect the drop in R(pull-up).
+we have choosen R(pull-up) for ALERT-LOW design is 4.7kohms
+=>maximum drop across pull-up(4.7k) when V(alert)HIGH is (18uA+1uA)*4.7k = 0.089v ( ~ 0.1v)
+
+Hence we can expect V(alert)HIGH = 3.3 -0.1 = 3.2 Volts 
+This is far above  the  V(IH)=2 of gpio-bbb
+  
+
+Conclusion:
+choosing  R(pull-up)=4.7k Ohms 
+Expecting  Ids=0.7mA,Vds=0.01 volts when ALERT-LOW 
+           Ids=1uA,  Vds=3.2  volts when ALERT-HIGH 
+
+
+Test Results:   ---
+
+
+
+

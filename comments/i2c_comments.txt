@@ -1,0 +1,774 @@
+
+
+cd /home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/i2c_applications/
+
+PATH=$PATH:/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin/
+
+arm-linux-gnueabihf-gcc  i2c_ioctl_app.c  -lpthread -o  i2c_ioctl_app
+
+cp i2c_ioctl_app  /home/jaguar/Documents/Emb_linux/em_lin/practice/rootfs_3/rfs_bb_static_1.17.4/tmp/
+
+/home/jaguar/Documents/Emb_linux/em_lin/practice/rootfs_3/rfs_bb_static_1.17.4/usr/lib/modules
+
+
+# 
+# insmod /usr/lib/modules/ioctl_template_driver.ko 
+[  557.306809] ioctl_template_driver: Unknown symbol __aeabi_ddiv (err 0)
+[  557.313737] ioctl_template_driver: Unknown symbol __aeabi_dmul (err 0)
+[  557.320655] ioctl_template_driver: Unknown symbol __aeabi_d2uiz (err 0)
+insmod: can't insert '/usr/lib/modules/ioctl_template_driver.ko': unknown symbol in module, or unknown parameter
+# 
+
+i2c_enable1 --Dir has adc,dac clients-PIC board
+/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/linux-4.3.2/scripts/dtc/dtc   -I dts  -O dtb  -o /tftpboot/am335x-boneblack_en_i2c.dtb  /home/jaguar/Documents/Emb_linux/dtb_comp/dtss/i2c_enable1/am335x-boneblack_i2c_en.dts 
+
+
+setenv ipaddr 192.168.3.20;setenv serverip 192.168.3.10;setenv bootargs 'console=ttyO0,115200n8 root=/dev/nfs rw ip=192.168.3.20  nfsroot=192.168.3.10:/home/jaguar/Documents/Emb_linux/em_lin/practice/rootfs_3/rfs_bb_static_1.17.4/';tftp 0x80007fc0  uImage_emb1;tftp 0x80f80000 am335x-boneblack_en_i2c.dtb;bootm 0x80007fc0 - 0x80f80000
+
+
+vi  drivers/hwmon/mcp3021.c   
+
+
+linux-4.3.2/fs/char_dev.c
+
+
+drivers/i2c/i2c-core.c
+include/linux/i2c.h
+
+int i2c_register_driver(struct module *owner, struct i2c_driver *driver)
+
+#define i2c_add_driver(driver) \
+        i2c_register_driver(THIS_MODULE, driver)
+
+
+include/linux/i2c.h
+
+ i2c_del_driver(&mcp3021_driver);
+
+
+#define MCP3201_DRIVER_TYPE               'M'
+//#define MCP3201_IOC_RESET               _IO(MCP3201_DRIVER_TYPE,  1 )
+#define MCP3201_IOC_QUERYSPACE          _IOR(MCP3201_DRIVER_TYPE, 2, int )
+
+#define MCP3201_IOC_MAX  1
+
+static int N_devices = 2;
+module_param(N_devices, int, S_IRUGO);
+
+static dev_t adc_first;
+
+static struct class *adc_class;
+
+static struct file_operations adc_mcp3201_fops = {
+    .open     = adc_mcp3201_open,
+    .release  = adc_mcp3201_release,
+    .unlocked_ioctl   = adc_mcp3201_ioctl,
+    .owner    = THIS_MODULE,
+};
+
+
+static int adc_mcp3201_open(struct inode *inode, struct file *file)
+{
+
+
+    struct mcp3021_data *data;
+    int ret;
+    //printk(" \n");
+    //printk(" uart_kmem_open: process %i (%s)\n",current->pid, current->comm);
+    //printk(" struct inode *inode=%p  struct file *file=%p\n",inode,file);
+
+    data = container_of(inode->i_cdev,struct mcp3021_data, c_dev);
+    //printk(" priv adc object = %p  w.r.t cdev of opened device\n",data);
+
+
+
+
+
+    file->private_data = data;
+    //printk(" keep device object in devicefile's private_data\n");
+
+return ret;
+
+}
+
+
+static int uart_kmem_release(struct inode *inode, struct file *file)
+{
+    struct mcp3021_data *data=NULL;
+    //printk("\n\n");
+    data=file->private_data;
+
+
+
+
+    file->private_data=NULL;
+    return 0;
+}
+
+
+
+
+static long adc_mcp3201_ioctl(struct file *file,unsigned int mcp3201_cmd, unsigned long arg)
+{
+
+        void __user *argp = (void __user *)arg;
+
+        long unsigned int retval;
+        struct mcp3021_data *data =     file->private_data;
+
+        int reg, in_input;
+        int ret=0;
+
+
+	if (_IOC_TYPE(cmd) != MCP3201_DRIVER_TYPE)
+		return -ENOTTY;
+
+	if (_IOC_NR(cmd) > UART_IOC_MAX)
+		return -ENOTTY;
+
+
+
+        printk("adc_mcp3201_ioctl: process %i (%s)\n",current->pid, current->comm);
+//      printk("struct file *file=%p\n",file);
+
+        data=file->private_data;
+//      printk("device object ptr =%p available in private_data of opened device file\n",data);
+
+
+        mutex_lock(&(data->buf_lock));
+        printk("Device locked\n");
+
+        switch(mcp3201_cmd)
+        {
+        case MCP3201_IOC_RESET:
+
+                break;
+
+        case MCP3201_IOC_RDINPUT:
+
+			        reg = mcp3021_read16(data->clientp);
+			        if (reg < 0)
+	                return reg; //handle error properly
+	
+			        in_input = volts_from_reg(data, reg);
+
+			    	ret = put_user(in_input, (int *)arg);
+                 
+					break;
+
+        case default:
+                printk("Unknown ioctl-cmd\n");
+                break;    */
+        }
+
+        printk("Device Unlocked\n");
+        mutex_unlock(&(data->buf_lock));
+        return ret;
+}
+
+
+struct mcp3021_data {
+        struct device *hwmon_dev;
+        u32 vdd;        /* device power supply */
+        u16 sar_shift;
+        u16 sar_mask;
+        u8 output_res;
+
+    struct cdev c_dev;
+ dev_t devicenum;
+    unsigned int major;
+    unsigned int minor;
+    const char *device_name;
+
+struct i2c_client *clientp;
+
+};
+
+
+mcp3021_probe
+
+
+static int __init mcp3201_adc_drv_init(void)
+{
+    int retval;
+    if((retval= alloc_chrdev_region(&adc_first, 0, N_devices, "mcp3021\n")))
+    {
+    //printk(" unable to Allocate device Numbers\n");
+    return -EBUSY;
+    }
+    //printk(" Allocated device Numbers:MajorNum=%d Minor=%d\n",MAJOR(adc_first),MINOR(adc_first) );
+    adc_class = class_create(THIS_MODULE, "adc_devices");
+    if (IS_ERR(adc_class)) {
+    retval = PTR_ERR(adc_class);
+    //printk(" class_create Failed\n");
+    goto err1;
+    }
+    //printk(" class created for the adc\n");
+    //printk(" Registering platform_driver.....\n");
+    //printk(" i2c subsystem Allocates i2c_client structure\n");
+    //printk(" and calls probe for  all driver compatible nodes in DT\n");
+    platform_driver_register(&mcp3021_driver);
+    //printk(" mcp3021_driver registered\n");
+    return 0;
+err1:
+    unregister_chrdev_region(adc_first,N_devices);
+    //printk(" free the Allocated device Numbers\n");
+    //printk(KERN_ERR "mcp3021_driver: cannot register device. error=%d\n",retval);
+    //printk(" free the Allocated device Numbers\n");
+    //printk(KERN_ERR "mcp3021_driver: cannot register device. error=%d\n",retval);
+    return retval;
+}
+
+static void __exit  mcp3201_adc_drv_exit(void)
+{
+    //printk("\n\n");
+    //printk(KERN_ALERT " mcp3201_adc_drv_exit\n");
+    platform_driver_unregister(&mcp3021_driver);
+    //printk(" unregister platform_driver\n");
+    class_destroy(adc_class);
+    //printk(" class for the uart_obj_device_device : destroyed\n");
+    unregister_chrdev_region(adc_first,N_devices);
+    //printk(" free the Allocated device Numbers\n");   
+    //printk(KERN_INFO " mcp3201_adc_drv: unloading.\n");
+}
+module_init(mcp3201_adc_drv_init);
+module_exit(mcp3201_adc_drv_exit);
+                                                                                                                    978,1         Bot
+                                                                                                                    932,1         98%
+
+
+
+INiT
+    int retval;
+    if((retval= alloc_chrdev_region(&adc_first, 0, N_devices, "mcp3021\n")))
+    {
+    //printk(" unable to Allocate device Numbers\n");
+    return -EBUSY;
+    }
+
+    //printk(" Allocated device Numbers:MajorNum=%d Minor=%d\n",MAJOR(adc_first),MINOR(adc_first) );
+    adc_class = class_create(THIS_MODULE, "adc_devices");
+    if (IS_ERR(adc_class)) {
+    retval = PTR_ERR(adc_class);
+    //printk(" class_create Failed\n");
+    goto err1;
+    }
+
+
+err1:
+    unregister_chrdev_region(adc_first,N_devices);
+    //printk(" free the Allocated device Numbers\n");
+    //printk(KERN_ERR "custom uart drv: cannot register device. error=%d\n",retval);
+    return retval;
+
+Exit
+    class_destroy(adc_class);
+    //printk(" class for the uart_obj_device_device : destroyed\n");
+    unregister_chrdev_region(adc_first,N_devices);
+    //printk(" free the Allocated device Numbers\n");   
+    //printk(KERN_INFO " mcp3201_adc_drv: unloading.\n");
+
+
+
+probe:
+
+    cdev_init(&(data->c_dev),&adc_mcp3201_fops);
+
+    //printk("  cdev Initialised with adc_mcp3201_fops\n");
+       if( (ret=cdev_add(&(data->c_dev),data->devicenum,1)) < 0 )
+    {
+        //printk(KERN_ALERT "(cdev)mcp3201_adc  not added to the system\n");
+        goto err1;
+    }
+    //printk(" (cdev)mcp3201_adc added to system\n");
+//    sprintf(devname, "adc%d",data->minor);
+//    if (device_create(adc_class, NULL,data->devicenum, NULL, devname) == NULL)
+    if (device_create(adc_class, NULL,data->devicenum, NULL,data->device_name) == NULL)
+    {
+        //printk(" device create: failed \n");
+        goto err2;
+
+    }
+
+
+    data->clientp= client;
+
+
+err2: 
+    cdev_del(&(data->c_dev));
+    //printk(" adc%d removed from system\n",MINOR(data->devicenum));
+
+
+    cdev_del(&(data->c_dev));
+    device_destroy(adc_class,data->devicenum);
+    //printk(" /dev/adc%d node destroyed\n",data->minor);
+    //printk(" adc%d device removed from system\n",data->minor);
+
+9491113425 -
+
+30412364479
+
+
+
+step1:  tar -xvf   i2c-tools-3.1.2.tar.bz2 
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ pwd
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls
+CHANGES  COPYING  eeprom  eepromer  include  Makefile  py-smbus  README  stub  tools  version.h
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l py-smbus/
+total 32
+-rw-r--r-- 1 jaguar jaguar   730 Feb 20  2014 Module.mk
+-rw-r--r-- 1 jaguar jaguar   731 Dec 12  2010 README
+-rw-r--r-- 1 jaguar jaguar   424 Jan 17  2009 setup.py
+-rw-r--r-- 1 jaguar jaguar 17639 Jan 26  2015 smbusmodule.c
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l eeprom/
+total 120
+-rwxr-xr-x 1 jaguar jaguar 13286 Feb 19  2014 ddcmon
+-rwxr-xr-x 1 jaguar jaguar 71108 Jun 19  2014 decode-dimms
+-rw-r--r-- 1 jaguar jaguar  2143 Feb 20  2014 decode-dimms.1
+-rwxr-xr-x 1 jaguar jaguar  5600 Feb 19  2014 decode-edid
+-rwxr-xr-x 1 jaguar jaguar  5657 Feb 19  2014 decode-vaio
+-rw-r--r-- 1 jaguar jaguar  1298 Feb 20  2014 decode-vaio.1
+-rw-r--r-- 1 jaguar jaguar  1105 Feb 20  2014 Module.mk
+-rw-r--r-- 1 jaguar jaguar   806 Jan 13  2009 README
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l stub/
+total 16
+-rwxr-xr-x 1 jaguar jaguar 5580 Feb 19  2014 i2c-stub-from-dump
+-rw-r--r-- 1 jaguar jaguar 1717 Mar  8  2010 i2c-stub-from-dump.8
+-rw-r--r-- 1 jaguar jaguar  798 Feb 19  2014 Module.mk
+
+
+
+
+
+
+PATH=$PATH:/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin/
+
+
+make  ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- 
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ make  ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- 
+cc -O2 -Wall -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wnested-externs -Winline -W -Wundef -Wmissing-prototypes -Iinclude -c tools/i2cdetect.c -o tools/i2cdetect.o
+cc -O2 -Wall -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wnested-externs -Winline -W -Wundef -Wmissing-prototypes -Iinclude -c tools/i2cbusses.c -o tools/i2cbusses.o
+cc  -o tools/i2cdetect tools/i2cdetect.o tools/i2cbusses.o
+cc -O2 -Wall -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wnested-externs -Winline -W -Wundef -Wmissing-prototypes -Iinclude -c tools/i2cdump.c -o tools/i2cdump.o
+In file included from tools/i2cdump.c:29:0:
+tools/i2cdump.c: In function ‘main’:
+include/linux/i2c-dev.h:189:21: warning: inlining failed in call to ‘i2c_smbus_read_byte_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_byte_data(int file, __u8 command)
+                     ^
+tools/i2cdump.c:316:7: warning: called from here [-Winline]
+   res = i2c_smbus_read_byte_data(file, bankreg);
+       ^
+In file included from tools/i2cdump.c:29:0:
+include/linux/i2c-dev.h:189:21: warning: inlining failed in call to ‘i2c_smbus_read_byte_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_byte_data(int file, __u8 command)
+                     ^
+tools/i2cdump.c:398:17: warning: called from here [-Winline]
+      block[i+j] = res =
+                 ^
+In file included from tools/i2cdump.c:29:0:
+include/linux/i2c-dev.h:208:21: warning: inlining failed in call to ‘i2c_smbus_read_word_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_word_data(int file, __u8 command)
+                     ^
+tools/i2cdump.c:401:10: warning: called from here [-Winline]
+      res = i2c_smbus_read_word_data(file,
+          ^
+In file included from tools/i2cdump.c:29:0:
+include/linux/i2c-dev.h:208:21: warning: inlining failed in call to ‘i2c_smbus_read_word_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_word_data(int file, __u8 command)
+                     ^
+tools/i2cdump.c:475:9: warning: called from here [-Winline]
+     res = i2c_smbus_read_word_data(file, i+j);
+         ^
+cc -O2 -Wall -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wnested-externs -Winline -W -Wundef -Wmissing-prototypes -Iinclude -c tools/util.c -o tools/util.o
+cc  -o tools/i2cdump tools/i2cdump.o tools/i2cbusses.o tools/util.o
+cc -O2 -Wall -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wnested-externs -Winline -W -Wundef -Wmissing-prototypes -Iinclude -c tools/i2cset.c -o tools/i2cset.o
+In file included from tools/i2cset.c:29:0:
+tools/i2cset.c: In function ‘main’:
+include/linux/i2c-dev.h:174:21: warning: inlining failed in call to ‘i2c_smbus_read_byte’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_byte(int file)
+                     ^
+tools/i2cset.c:326:13: warning: called from here [-Winline]
+    oldvalue = i2c_smbus_read_byte(file);
+             ^
+In file included from tools/i2cset.c:29:0:
+include/linux/i2c-dev.h:208:21: warning: inlining failed in call to ‘i2c_smbus_read_word_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_word_data(int file, __u8 command)
+                     ^
+tools/i2cset.c:329:13: warning: called from here [-Winline]
+    oldvalue = i2c_smbus_read_word_data(file, daddress);
+             ^
+In file included from tools/i2cset.c:29:0:
+include/linux/i2c-dev.h:189:21: warning: inlining failed in call to ‘i2c_smbus_read_byte_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_byte_data(int file, __u8 command)
+                     ^
+tools/i2cset.c:332:13: warning: called from here [-Winline]
+    oldvalue = i2c_smbus_read_byte_data(file, daddress);
+             ^
+In file included from tools/i2cset.c:29:0:
+include/linux/i2c-dev.h:174:21: warning: inlining failed in call to ‘i2c_smbus_read_byte’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_byte(int file)
+                     ^
+tools/i2cset.c:406:7: warning: called from here [-Winline]
+   res = i2c_smbus_read_byte(file);
+       ^
+In file included from tools/i2cset.c:29:0:
+include/linux/i2c-dev.h:208:21: warning: inlining failed in call to ‘i2c_smbus_read_word_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_word_data(int file, __u8 command)
+                     ^
+tools/i2cset.c:410:7: warning: called from here [-Winline]
+   res = i2c_smbus_read_word_data(file, daddress);
+       ^
+In file included from tools/i2cset.c:29:0:
+include/linux/i2c-dev.h:189:21: warning: inlining failed in call to ‘i2c_smbus_read_byte_data’: call is unlikely and code size would grow [-Winline]
+ static inline __s32 i2c_smbus_read_byte_data(int file, __u8 command)
+                     ^
+tools/i2cset.c:413:7: warning: called from here [-Winline]
+   res = i2c_smbus_read_byte_data(file, daddress);
+       ^
+cc  -o tools/i2cset tools/i2cset.o tools/i2cbusses.o tools/util.o
+cc -O2 -Wall -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wnested-externs -Winline -W -Wundef -Wmissing-prototypes -Iinclude -c tools/i2cget.c -o tools/i2cget.o
+cc  -o tools/i2cget tools/i2cget.o tools/i2cbusses.o tools/util.o
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l stub/
+total 16
+-rwxr-xr-x 1 jaguar jaguar 5580 Feb 19  2014 i2c-stub-from-dump
+-rw-r--r-- 1 jaguar jaguar 1717 Mar  8  2010 i2c-stub-from-dump.8
+-rw-r--r-- 1 jaguar jaguar  798 Feb 19  2014 Module.mk
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l tools/
+total 256
+-rw-r--r-- 1 jaguar jaguar 10107 Feb 20  2014 i2cbusses.c
+-rw-r--r-- 1 jaguar jaguar  1380 Feb 19  2014 i2cbusses.h
+-rw-r--r-- 1 jaguar jaguar 10200 Feb 17 13:55 i2cbusses.o
+-rwxr-xr-x 1 jaguar jaguar 23268 Feb 17 13:55 i2cdetect
+-rw-r--r-- 1 jaguar jaguar  2627 Dec 21  2012 i2cdetect.8
+-rw-r--r-- 1 jaguar jaguar  8573 Feb 20  2014 i2cdetect.c
+-rw-r--r-- 1 jaguar jaguar 10944 Feb 17 13:55 i2cdetect.o
+-rwxr-xr-x 1 jaguar jaguar 23446 Feb 17 13:55 i2cdump
+-rw-r--r-- 1 jaguar jaguar  3349 May  5  2008 i2cdump.8
+-rw-r--r-- 1 jaguar jaguar 12031 Feb 20  2014 i2cdump.c
+-rw-r--r-- 1 jaguar jaguar 13472 Feb 17 13:55 i2cdump.o
+-rwxr-xr-x 1 jaguar jaguar 23229 Feb 17 13:55 i2cget
+-rw-r--r-- 1 jaguar jaguar  2475 May  5  2008 i2cget.8
+-rw-r--r-- 1 jaguar jaguar  6608 Feb 20  2014 i2cget.c
+-rw-r--r-- 1 jaguar jaguar  8304 Feb 17 13:55 i2cget.o
+-rwxr-xr-x 1 jaguar jaguar 23421 Feb 17 13:55 i2cset
+-rw-r--r-- 1 jaguar jaguar  4012 Jan 29  2011 i2cset.8
+-rw-r--r-- 1 jaguar jaguar 11082 Feb 20  2014 i2cset.c
+-rw-r--r-- 1 jaguar jaguar 14176 Feb 17 13:55 i2cset.o
+-rw-r--r-- 1 jaguar jaguar  2823 Feb 20  2014 Module.mk
+-rw-r--r-- 1 jaguar jaguar  1314 Feb 19  2014 util.c
+-rw-r--r-- 1 jaguar jaguar   910 Feb 19  2014 util.h
+-rw-r--r-- 1 jaguar jaguar  1632 Feb 17 13:55 util.o
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l eepromer/
+total 80
+-rw-r--r-- 1 jaguar jaguar  4912 Feb 20  2014 24cXX.c
+-rw-r--r-- 1 jaguar jaguar  2060 Apr 26  2012 24cXX.h
+-rw-r--r-- 1 jaguar jaguar  2563 Feb 20  2014 eeprog.8
+-rw-r--r-- 1 jaguar jaguar  7374 Feb 18  2008 eeprog.c
+-rw-r--r-- 1 jaguar jaguar  2026 Feb 20  2014 eeprom.8
+-rw-r--r-- 1 jaguar jaguar  8521 Feb 20  2014 eeprom.c
+-rw-r--r-- 1 jaguar jaguar  1658 Feb 20  2014 eepromer.8
+-rw-r--r-- 1 jaguar jaguar 13687 Feb 20  2014 eepromer.c
+-rw-r--r-- 1 jaguar jaguar   197 Jun 27  2007 Makefile
+-rw-r--r-- 1 jaguar jaguar  1606 Dec 14  2003 README
+-rw-r--r-- 1 jaguar jaguar   410 Dec 14  2003 README.eeprog
+-rw-r--r-- 1 jaguar jaguar  3463 Jun 27  2007 README.eeprom
+-rw-r--r-- 1 jaguar jaguar   837 Dec 19  2001 README.eepromer
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ ls -l py-smbus/
+total 32
+-rw-r--r-- 1 jaguar jaguar   730 Feb 20  2014 Module.mk
+-rw-r--r-- 1 jaguar jaguar   731 Dec 12  2010 README
+-rw-r--r-- 1 jaguar jaguar   424 Jan 17  2009 setup.py
+-rw-r--r-- 1 jaguar jaguar 17639 Jan 26  2015 smbusmodule.c
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+
+
+
+make  ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- prefix=/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest  install
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls
+bin  include  sbin  share
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ pwd
+
+
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls
+bin  include  sbin  share
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls -l bin/
+total 104
+-rwxr-xr-x 1 jaguar jaguar 13286 Feb 17 13:38 ddcmon
+-rwxr-xr-x 1 jaguar jaguar 71108 Feb 17 13:38 decode-dimms
+-rwxr-xr-x 1 jaguar jaguar  5600 Feb 17 13:38 decode-edid
+-rwxr-xr-x 1 jaguar jaguar  5657 Feb 17 13:38 decode-vaio
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls -l include/
+total 4
+drwxr-xr-x 2 jaguar jaguar 4096 Feb 17 13:38 linux
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls -l include/linux/
+total 12
+-rw-r--r-- 1 jaguar jaguar 10414 Feb 17 13:38 i2c-dev.h
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls -l sbin/
+total 104
+-rwxr-xr-x 1 jaguar jaguar 23268 Feb 17 13:38 i2cdetect
+-rwxr-xr-x 1 jaguar jaguar 23446 Feb 17 13:38 i2cdump
+ -rwxr-xr-x 1 jaguar jaguar 23229 Feb 17 13:38 i2cget
+-rwxr-xr-x 1 jaguar jaguar 23421 Feb 17 13:38 i2cset
+-rwxr-xr-x 1 jaguar jaguar  5580 Feb 17 13:38 i2c-stub-from-dump
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ ls -l share/
+total 4
+drwxr-xr-x 4 jaguar jaguar 4096 Feb 17 13:38 man
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest $ 
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ pwd
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ 
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2 $ make  ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- EXTRA="py-smbus"
+cd py-smbus && CPPFLAGS=" -I../include" python setup.py build
+running build
+running build_ext
+building 'smbus' extension
+creating build
+creating build/temp.linux-x86_64-2.7
+x86_64-linux-gnu-gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -I../include -fPIC -I/usr/include/python2.7 -c smbusmodule.c -o build/temp.linux-x86_64-2.7/smbusmodule.o
+creating build/lib.linux-x86_64-2.7
+x86_64-linux-gnu-gcc -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -D_FORTIFY_SOURCE=2 -g -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -I../include build/temp.linux-x86_64-2.7/smbusmodule.o -o build/lib.linux-x86_64-2.7/smbus.so
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c-tools-3.1.2/py-smbus/build/lib.linux-x86_64-2.7 $ cp  smbus.so /home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/I2c_tools/i2c_tools_dest/share/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/linux-4.3.2/scripts/dtc/dtc   -I dts  -O dtb  -o /tftpboot/am335x-boneblack_en_i2c.dtb  /home/jaguar/Documents/Emb_linux/dtb_comp/dtss/i2c_enable/am335x-boneblack_i2c_en.dts 
+
+
+setenv ipaddr 192.168.3.20;setenv serverip 192.168.3.10;setenv bootargs 'console=ttyO0,115200n8 root=/dev/nfs rw ip=192.168.3.20  nfsroot=192.168.3.10:/home/jaguar/Documents/Emb_linux/em_lin/practice/rootfs_3/rfs_bb_static_1.17.4/';tftp 0x80007fc0  uImage_emb1;tftp 0x80f80000 am335x-boneblack_en_i2c.dtb;bootm 0x80007fc0 - 0x80f80000
+
+
+
+
+Binary file ./drivers/i2c/busses/built-in.o matches
+./drivers/i2c/busses/i2c-omap.c:1181:		.compatible = "ti,omap4-i2c",
+Binary file ./drivers/i2c/built-in.o matches
+
+
+
+
+
+
+
+
+
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver $ sudo make ARCH=arm  CROSS_COMPILE=/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin/arm-linux-gnueabihf-   -C /root/beagleboneb_emb_linux_2015/emb_linux_kernel1/bb-kernel/KERNEL  M=`pwd` modules
+make: Entering directory `/root/beagleboneb_emb_linux_2015/emb_linux_kernel1/bb-kernel/KERNEL'
+  CC [M]  /home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1.o
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1.c: In function ‘dac_tc1321_ioctl’:
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1.c:230:18: warning: unused variable ‘in_input’ [-Wunused-variable]
+         int reg, in_input;
+                  ^
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1.c:230:13: warning: unused variable ‘reg’ [-Wunused-variable]
+         int reg, in_input;
+             ^
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1.c: In function ‘tc1321_probe’:
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1.c:306:6: warning: ‘err’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  int err;
+      ^
+  Building modules, stage 2.
+  MODPOST 1 modules
+/home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1: struct i2c_device_id is 24 bytes.  The last of 1 is:
+0x74 0x63 0x31 0x33 0x32 0x31 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+FATAL: /home/jaguar/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver/dac_driver1: struct i2c_device_id is not terminated with a NULL entry!
+make[1]: *** [__modpost] Error 1
+make: *** [modules] Error 2
+make: Leaving directory `/root/beagleboneb_emb_linux_2015/emb_linux_kernel1/bb-kernel/KERNEL'
+jaguar@jaguar-ThinkPad-T540p ~/Documents/Emb_linux/em_lin/practice/i2c_practice/i2c_driver_assignment/dac_driver $ 
+
+
+
+
+
+
+
+
+
+jaguar@jaguar-ThinkPad-T540p ~/Downloads/C_pgm_scratch/ioctl_template_drv $ 
+jaguar@jaguar-ThinkPad-T540p ~/Downloads/C_pgm_scratch/ioctl_template_drv $ sudo make ARCH=arm  CROSS_COMPILE=/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin/arm-linux-gnueabihf-   -C /root/beagleboneb_emb_linux_2015/emb_linux_kernel1/bb-kernel/KERNEL  M=`pwd` modules
+make: Entering directory `/root/beagleboneb_emb_linux_2015/emb_linux_kernel1/bb-kernel/KERNEL'
+  CC [M]  /home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.o
+/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.c: In function ‘send_input_to_dac’:
+/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.c:214:1: warning: format ‘%f’ expects argument of type ‘float *’, but argument 3 has type ‘double *’ [-Wformat=]
+ sscanf(buf, "%f", &required_vg);
+ ^
+In file included from include/linux/kobject.h:21:0,
+                 from include/linux/module.h:16,
+                 from /home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.c:15:
+/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.c: At top level:
+/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.c:240:77: warning: initialization from incompatible pointer type
+ static struct kobj_attribute dac_input_attr = __ATTR(dac_input, 0666, NULL, send_input_to_dac);
+                                                                             ^
+include/linux/sysfs.h:74:11: note: in definition of macro ‘__ATTR’
+  .store = _store,     \
+           ^
+/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.c:240:77: warning: (near initialization for ‘dac_input_attr.store’)
+ static struct kobj_attribute dac_input_attr = __ATTR(dac_input, 0666, NULL, send_input_to_dac);
+                                                                             ^
+include/linux/sysfs.h:74:11: note: in definition of macro ‘__ATTR’
+  .store = _store,     \
+           ^
+  Building modules, stage 2.
+  MODPOST 1 modules
+WARNING: "__aeabi_d2uiz" [/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.ko] undefined!
+WARNING: "__aeabi_ddiv" [/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.ko] undefined!
+WARNING: "__aeabi_dmul" [/home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.ko] undefined!
+  CC      /home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.mod.o
+  LD [M]  /home/jaguar/Downloads/C_pgm_scratch/ioctl_template_drv/ioctl_template_driver.ko
+make: Leaving directory `/root/beagleboneb_emb_linux_2015/emb_linux_kernel1/bb-kernel/KERNEL'
+jaguar@jaguar-ThinkPad-T540p ~/Downloads/C_pgm_scratch/ioctl_template_drv $ ^C
+
+
+ 2
+down vote
+favorite
+	
+
+I have a device driver which was compiling fine using arm-linux-gnueabi- I added a few double and float operations into the code and I have been getting the following in warnings at compilation:
+
+WARNING: "__aeabi_dsub" [/home/preetam/Desktop/pwm_driver/driver/pwm_dev.ko] undefined! WARNING: "__aeabi_d2uiz" [/home/preetam/Desktop/pwm_driver/driver/pwm_dev.ko] undefined! WARNING: "__aeabi_dmul" [/home/preetam/Desktop/pwm_driver/driver/pwm_dev.ko] undefined! WARNING: "__aeabi_ddiv" [/home/preetam/Desktop/pwm_driver/driver/pwm_dev.ko] undefined! WARNING: "__aeabi_ui2d" [/home/preetam/Desktop/pwm_driver/driver/pwm_dev.ko] undefined!
+
+Does it mean that the compiler and/or the arm platform does not support floating and double data types?
+
+Can you do your floating point operations in user space? Floating point operations in kernel space are highly discouraged.
+You must not use FP in the kernel. Show what your driver is actually trying to do. 
+
+
+Floating point is forbidden in kernel code since the floating point
+registers (and other floating point context) is not saved/restored
+during system calls, for efficiency.
+
+
+
+Also you can not easily link in the math libraries to the kernel .
+
+So for the kernel, and for this function, you could use fixed point math instead of floating point math.
+
+however we found a way do it using  integer based algorithm in kernel itself.
+
+
+
+# 
+# insmod /usr/lib/modules/ioctl_template_driver.ko 
+[  557.306809] ioctl_template_driver: Unknown symbol __aeabi_ddiv (err 0)
+[  557.313737] ioctl_template_driver: Unknown symbol __aeabi_dmul (err 0)
+[  557.320655] ioctl_template_driver: Unknown symbol __aeabi_d2uiz (err 0)
+insmod: can't insert '/usr/lib/modules/ioctl_template_driver.ko': unknown symbol in module, or unknown parameter
+# 
+
+
+
+
+ALERT --- > GPIO-BBB
+
+/home/jaguar/Documents/Emb_linux/em_lin/practice/Linux_srcARM/linux-4.3.2/scripts/dtc/dtc   -I dts  -O dtb  -o /tftpboot/am335x-bbbgpio_alertINTR.dtb  /home/jaguar/Documents/Emb_linux/dtb_comp/dtss/gpio_ALERT_Interrupt/am335x-boneblack_gpio_ALERTintr.dts
+
+setenv ipaddr 192.168.3.20;setenv serverip 192.168.3.10;setenv bootargs 'console=ttyO0,115200n8 root=/dev/nfs rw ip=192.168.3.20  nfsroot=192.168.3.10:/home/jaguar/Documents/Emb_linux/em_lin/practice/rootfs_3/rfs_bb_static_1.17.4/';tftp 0x80007fc0  uImage_emb1;tftp 0x80f80000 am335x-bbbgpio_alertINTR.dtb;bootm 0x80007fc0 - 0x80f80000
+
+# insmod /usr/lib/modules/bbbgpio_alert.ko 
+[  106.558854] In bbbgpio_alert_probe: 
+[  106.562686] devname=gpio_ALERT_interrupt.9
+[  106.566981] devname=gpio_ALERT_interrupt.9
+[  106.571341] pinctrl-single 44e10800.pinmux: mux offset out of range: 0x810 (0x238)
+[  106.579280] pinctrl-single 44e10800.pinmux: could not add functions for pinmux_gpioALERT_pin 2064x
+[  106.588705] child-count=1
+[  106.591472] gpio---2 
+[  106.593866] Unable to handle kernel NULL pointer dereference at virtual address 00000000
+[  106.602327] pgd = df4f0000
+[  106.605162] [00000000] *pgd=9f4a8831, *pte=00000000, *ppte=00000000
+[  106.611753] Internal error: Oops: 17 [#1] SMP THUMB2
+[  106.616933] Modules linked in: bbbgpio_alert(O+)
+[  106.621764] CPU: 0    Tainted: G           O  (3.8.13-bbb+ #2)
+[  106.627862] PC is at bbbgpio_alert_probe+0x12f/0x1c8 [bbbgpio_alert]
+[  106.634513] LR is at of_get_property+0x7/0xc
+[  106.638969] pc : [<bf80017c>]    lr : [<c03d8177>]    psr: 60000033
+[  106.638969] sp : df4ebdc8  ip : c029d031  fp : df4af264
+[  106.650952] r10: 00000001  r9 : 00000000  r8 : df112610
+[  106.656403] r7 : bf800780  r6 : c0d32834  r5 : df451250  r4 : 00000000
+[  106.663214] r3 : 00000000  r2 : 00000000  r1 : bf8004d0  r0 : 00000000
+[  106.670028] Flags: nZCv  IRQs on  FIQs on  Mode SVC_32  ISA Thumb  Segment user
+[  106.677656] Control: 50c5387d  Table: 9f4f0019  DAC: 00000015
+[  106.683651] Process insmod (pid: 92, stack limit = 0xdf4ea240)
+[  106.689736] Stack: (0xdf4ebdc8 to 0xdf4ec000)
+[  106.694285] bdc0:                   c02bf1f9 bf8005d8 c091ddec df112610 df112644 c02bf1f9
+[  106.702822] bde0: bf8005d8 c02bf0a9 df112610 bf8005d8 df112644 c02bf1f9 bf8005d8 c02bf243
+[  106.711363] be00: df112610 00000000 00000001 c02bdf9d df044478 df111b80 bf8005d8 df460640
+[  106.719901] be20: c08821b8 00000000 bf802001 c02beac7 bf800588 bf8005d8 df4ea010 bf8005d8
+[  106.728440] be40: df4ea010 bf800618 df4af240 c02bf629 c08ae980 df4ea010 bf800618 df4af240
+[  106.736978] be60: bf802001 bf80200f df4ea000 c0008747 c08679c8 c004b96b 00000000 00000001
+[  106.745515] be80: 00000002 df1b7780 bf800624 bf800618 df4af240 bf800660 00000001 00000001
+[  106.754051] bea0: df4af264 c006fbed bf800624 00007fff c006d035 c0007828 e08f4000 00000000
+[  106.762589] bec0: df4ebf58 df4ea008 bf800624 bf800618 bf80076c c0047cfd 000002d2 00001a5f
+[  106.771127] bee0: df4ea000 00000000 00000002 e08f2000 df49e388 00000000 00000000 00000000
+[  106.779664] bf00: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[  106.788203] bf20: 00000000 00000000 00000000 00000000 c000c8a4 00001a5f 00065018 00065008
+[  106.796741] bf40: 00000080 c000c8a4 df4ea000 00000000 00000000 c00701b9 e08f2000 00001a5f
+[  106.805279] bf60: e08f2a40 e08f293b e08f3738 00000784 00000a04 00000000 00000000 00000000
+[  106.813818] bf80: 00000018 00000019 00000010 00000000 0000000c 00000000 bea40f49 00065018
+[  106.822356] bfa0: 00065008 c000c701 bea40f49 00065018 00065018 00001a5f 00065008 00000000
+[  106.830894] bfc0: bea40f49 00065018 00065008 00000080 00000001 00008c04 0005ffe4 00000000
+[  106.839433] bfe0: 00064074 bea40d80 0000b420 00035264 20000010 00065018 ff21cd1f 7fd9c477
+[  106.847991] [<bf80017c>] (bbbgpio_alert_probe+0x12f/0x1c8 [bbbgpio_alert]) from [<c02bf0a9>] (driver_probe_device+0x55/0x180)
+[  106.859804] [<c02bf0a9>] (driver_probe_device+0x55/0x180) from [<c02bf243>] (__driver_attach+0x4b/0x4c)
+[  106.869614] [<c02bf243>] (__driver_attach+0x4b/0x4c) from [<c02bdf9d>] (bus_for_each_dev+0x3d/0x5c)
+[  106.879060] [<c02bdf9d>] (bus_for_each_dev+0x3d/0x5c) from [<c02beac7>] (bus_add_driver+0x77/0x184)
+[  106.888505] [<c02beac7>] (bus_add_driver+0x77/0x184) from [<c02bf629>] (driver_register+0x3d/0xc8)
+[  106.897864] [<c02bf629>] (driver_register+0x3d/0xc8) from [<bf80200f>] (bbbgpio_alert_init+0xe/0x1f [bbbgpio_alert])
+[  106.908859] [<bf80200f>] (bbbgpio_alert_init+0xe/0x1f [bbbgpio_alert]) from [<c0008747>] (do_one_initcall+0xcb/0x10c)
+[  106.919944] [<c0008747>] (do_one_initcall+0xcb/0x10c) from [<c006fbed>] (load_module+0x1149/0x16b8)
+[  106.929391] [<c006fbed>] (load_module+0x1149/0x16b8) from [<c00701b9>] (sys_init_module+0x5d/0x8c)
+[  106.938749] [<c00701b9>] (sys_init_module+0x5d/0x8c) from [<c000c701>] (ret_fast_syscall+0x1/0x44)
+[  106.948103] Code: f3d7 dffc 4603 b900 (6823) 6838 
+[  106.953144] ---[ end trace a6950742b26b11ab ]---
+Segmentation fault
+
+
+
+
+

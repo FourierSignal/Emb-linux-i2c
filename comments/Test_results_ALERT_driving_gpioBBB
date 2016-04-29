@@ -1,0 +1,62 @@
+
+ALERT configured Active low.
+gpio30 - configuration SLOW_FAST|INPUT|PULL_DIS|MODE7->gpio
+
+
+# cd /sys/bus/i2c/devices/1-0049/
+#
+# echo 12 > hyst_reg
+# echo 20 > tset_reg
+
+# [  127.239745] bbbgpio_alert_ISR: irq=158
+# cat /sys/class/gpio/gpio30/value
+0
+#
+
+
+# echo 75 > hyst_reg
+# echo 80 > tset_reg
+
+# cat /sys/class/gpio/gpio30/value
+1
+#
+
+observations:
+In  ALERT Low state
+
+Valert / Vgpio-in =  0.01 volts
+current into gpio = 0 uA
+current into temp-sensor =7mA
+ 
+In ALERT High state :  Valert / Vgpio-in =  3.32 volts
+ current into gpio = 7 uA
+current into temp-sensor =0uA
+
+
+
+configured with Rxr Enabled ,Pull disabled --- i/p only 
+when left floating - 0.13 v
+when externally connected to GND through Resistor 4.7k - Vout@pin = 0v
+ echo into > /sys/class/gpio/gpio30/value ---- not changing o/p value 
+
+
+configured with Rxr Enabled ,Pull-DN enabled --- i/p only.
+when left floating - 0.0 v
+when externally connected to GND through Resistor 4.7k - Vout@pin = 0v
+echo into > /sys/class/gpio/gpio30/value ---- not changing o/p value 
+
+
+
+configured with Rxr Enabled ,Pull-UP enabled --- i/p only.
+when externally connected to GND through Resistor 4.7k o/p voltage = 0.4volts
+when externally connected to GND through Resistor 470k o/p voltage = 3 volts
+echo into > /sys/class/gpio/gpio30/value ---- not changing o/p value 
+
+when left floating  = 3.12
+echo into > /sys/class/gpio/gpio30/value ---- not changing o/p state 
+echo 0 > /sys/class/gpio/gpio30/value = 3.11
+echo 1 > /sys/class/gpio/gpio30/value = 3.12
+               
+conclusion:
+
+

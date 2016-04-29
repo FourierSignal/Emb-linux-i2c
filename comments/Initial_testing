@@ -1,0 +1,57 @@
+
+
+Test1 :    voltage level of ALERT-pin when left drain  open. ??
+-------
+
+Results:
+---------
+ when [ Ta < T(hyst)< T(set) ] / [ MOSFET is OFF ] =========> V(ALERT) = 0.2v to 0.38 volts (it is varying)
+
+ when [ T(hyst) < T(set) < Ta ] / [ MOSFET is ON ] =========> V(ALERT) = 0 volts
+              
+
+
+
+Test2:
+--------
+
+connect ALERT pin to VDD through R(pull-up) , ammeter in series with R(pull-up) and Voltmeter across ALERT pin and GND.
+		Test  Ids and V(alert) {which is also Vds} values for various Rpull-up values : for below conditions		
+	    T(hyst) < T(set) < Ta { ALERT in LOW state }
+        Ta < T(hyst)< T(set)  { ALERT in HIGH state}
+
+Results:
+---------
+
+@ R(pull-up)= 1 Kohms  ==>  (Avoided testing this to be safe for now )
+
+ALERT in HIGH state:    I(ds) = 0mA     V(alert) = 3.36 Volts
+
+ALERT in LOW state :    I(ds) = ? mA     V(alert) = ? Volts
+
+
+@ R(pull-up)= 1.6 Kohms  ==>  
+
+ALERT in HIGH state:    I(ds) = 0mA     V(alert) = 3.36 Volts
+
+ALERT in LOW state :    I(ds) = 2.09mA   V(alert) = 0.04 Volts
+
+
+
+@ R(pull-up)= 2.7 Kohms  ==>  
+
+ALERT in HIGH state:    I(ds) = 0mA     V(alert) = 3.36 Volts
+
+ALERT in LOW state :    I(ds) = 1.23mA   V(alert) = 0.02 Volts
+
+
+
+@ R(pull-up)= 4.7 Kohms  ==>  
+
+ALERT in HIGH state:    I(ds) = 0mA     V(alert) = 3.36 Volts
+
+ALERT in LOW state :    I(ds) = 0.7mA   V(alert) = 0.01 Volts
+
+
+--------------------------------------------------------------------------------
+
